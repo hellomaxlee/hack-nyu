@@ -1,0 +1,113 @@
+{
+    "256_2": {
+        "research": {
+            "prompt": "Generate an image",
+            "research_type": "image_gen"
+        },
+        "bounding_box": {
+            "left": 0,
+            "top": 0,
+            "width": 14630400,
+            "height": 9267468
+        }
+    },
+    "256_3": {
+        "research": {
+            "prompt": "Summarize what the research query is in the location we're working on",
+            "research_type": "text_gen"
+        },
+        "bounding_box": {
+            "left": 1398493,
+            "top": 10656696,
+            "width": 11862673,
+            "height": 3706892
+        }
+    },
+    "256_4": {
+        "research": {
+            "prompt": "subway_1",
+            "research_type": "subway_gen"
+        },
+        "bounding_box": {
+            "left": 1383863,
+            "top": 14803279,
+            "width": 11862673,
+            "height": 1853327
+        }
+    },
+    "257_2": {
+        "research": null,
+        "bounding_box": {
+            "left": 1383863,
+            "top": 1846064,
+            "width": 11862673,
+            "height": 2471261
+        }
+    },
+    "257_3": {
+        "research": {
+            "prompt": "chart_1",
+            "research_type": "image_given"
+        },
+        "bounding_box": {
+            "left": 1383863,
+            "top": 5108138,
+            "width": 9490115,
+            "height": 5314355
+        }
+    },
+    "257_4": {
+        "research": {
+            "prompt": "stats_1",
+            "research_type": "text_given"
+        },
+        "bounding_box": {
+            "left": 1383863,
+            "top": 11064954,
+            "width": 5684163,
+            "height": 1304806
+        }
+    },
+    "257_5": {
+        "research": null,
+        "bounding_box": {
+            "left": 1383863,
+            "top": 12863870,
+            "width": 5684163,
+            "height": 1235393
+        }
+    },
+    "257_6": {
+        "research": {
+            "prompt": "stats_2",
+            "research_type": "text_given"
+        },
+        "bounding_box": {
+            "left": 7562255,
+            "top": 11064954,
+            "width": 5684282,
+            "height": 1304806
+        }
+    },
+    "257_7": {
+        "research": null,
+        "bounding_box": {
+            "left": 7562255,
+            "top": 12863870,
+            "width": 5684282,
+            "height": 1235393
+        }
+    },
+    "257_8": {
+        "research": {
+            "prompt": "Generate a text based on the research query",
+            "research_type": "text_gen"
+        },
+        "bounding_box": {
+            "left": 1383863,
+            "top": 14544080,
+            "width": 11862673,
+            "height": 1897737
+        }
+    }
+}
