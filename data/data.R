@@ -3,9 +3,41 @@
 
 ###
 
-# Set up / libraries
-if (!require("pacman")) install.packages("pacman")
-pacman::p_load(tidyverse, ggplot2, dplyr, sf, tigris, tidycensus, stringr, purrr, jsonlite)
+required_packages <- c(
+  "pacman",
+  "tidyverse",
+  "ggplot2",
+  "dplyr",
+  "sf",
+  "tigris",
+  "tidycensus",
+  "stringr",
+  "purrr",
+  "jsonlite",
+  "plumber"
+)
+
+missing_packages <- required_packages[!(required_packages %in% installed.packages()[,"Package"])]
+
+if (length(missing_packages) > 0) {
+  install.packages(missing_packages)
+}
+
+library(pacman)
+
+pacman::p_load(
+  tidyverse,
+  ggplot2,
+  dplyr,
+  sf,
+  tigris,
+  tidycensus,
+  stringr,
+  purrr,
+  jsonlite,
+  plumber
+)
+
 census_api_key("f93cd840b4ef93c2e0b640f5cac639fe7430a61a", install = TRUE, overwrite = TRUE)
 options(tigris_use_cache = TRUE)
 df <- read.csv("stations.csv") 
