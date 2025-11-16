@@ -390,7 +390,7 @@ export default function Page() {
 
   return (
     <>
-      <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-sky-950 text-slate-50">
+      <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-sky-950 text-slate-50 flex items-center">
         {/* Google Maps script */}
         <Script
           src={`https://maps.googleapis.com/maps/api/js?key=${GOOGLE_KEY}&libraries=places`}

@@ -307,6 +307,19 @@ export const powerpointRouter = {
 	createPlan: publicProcedure
 		.input(CreateResearchTaskInputSchema)
 		.handler(async ({ input }) => {
+			// First, call /build-heuristic with the input params
+			const buildHeuristicResponse = await fetch("http://localhost:8000/build-heuristic", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(input),
+			});
+
+			if (!buildHeuristicResponse.ok) {
+				throw new Error(`Failed to build heuristic: ${buildHeuristicResponse.statusText}`);
+			}
+
 			const researchTasks = await createResearchTasks({ input });
 			const slideJobs = await Promise.all(
 				researchTasks.map(answerResearchTask),

@@ -264,15 +264,15 @@ You are equipped with a todo list management system to guide the user when they 
             }),
 
             // Backend tools
-            get_current_weather: tool({
-                description: "Get the current weather",
-                inputSchema: z.object({
-                    city: z.string(),
-                }),
-                execute: async ({ city }) => {
-                    return `The weather in ${city} is sunny`;
-                },
-            }),
+            // get_current_weather: tool({
+            //     description: "Get the current weather",
+            //     inputSchema: z.object({
+            //         city: z.string(),
+            //     }),
+            //     execute: async ({ city }) => {
+            //         return `The weather in ${city} is sunny`;
+            //     },
+            // }),
 
             generate_research_report: tool({
                 description:
@@ -366,9 +366,16 @@ You are equipped with a todo list management system to guide the user when they 
                             const { mkdirSync } = require("fs");
                             mkdirSync(tmpDir, { recursive: true });
                         }
-                        writeFileSync(REPORT_DATA_PATH, JSON.stringify(extractedData, null, 2), "utf-8");
+                        writeFileSync(
+                            REPORT_DATA_PATH,
+                            JSON.stringify(extractedData, null, 2),
+                            "utf-8"
+                        );
                     } catch (error) {
-                        console.error("Failed to write report data to file:", error);
+                        console.error(
+                            "Failed to write report data to file:",
+                            error
+                        );
                     }
 
                     return {

@@ -78,36 +78,173 @@ class Research:
             "recommended_output_tokens": self.recommended_output_tokens
         }
 
-def shape_to_research(primary_key: str) -> Research | None:
+def shape_to_research(
+    primary_key: str,
+    summary: str = "",
+    preferred_line: str = "",
+    preferred_station: str = "",
+    budget_range: str = "",
+    lifestyle_preferences: list[str] = [],
+    amenities_desired: list[str] = [],
+    commute_preferences: str = "",
+    alternative_stations: list[str] = [],
+    neighborhood_likes: list[str] = [],
+    neighborhood_dislikes: list[str] = [],
+    alternative_neighborhoods: list[str] = []
+) -> Research | None:
+    """
+    Generate research prompts with personalized user data.
+
+    Args:
+        primary_key: The shape identifier
+        summary: User's conversation summary
+        preferred_line: User's preferred subway line
+        preferred_station: User's preferred subway station
+        budget_range: User's budget for rent
+        lifestyle_preferences: User's lifestyle preferences
+        amenities_desired: Desired amenities
+        commute_preferences: Commute preference details
+        alternative_stations: Other stations considered
+        neighborhood_likes: Things user likes about neighborhoods
+        neighborhood_dislikes: Things user wants to avoid
+        alternative_neighborhoods: Other neighborhoods considered
+    """
     match primary_key:
         case "256_2":
-            return Research(prompt="Generate an image", research_type=ResearchType.image_gen)
+            # Hero image for the report cover
+            prompt = f"Generate a professional, modern image depicting the {preferred_station} subway station area in NYC"
+            if neighborhood_likes:
+                prompt += f", highlighting {', '.join(neighborhood_likes[:2])}"
+            return Research(prompt=prompt, research_type=ResearchType.image_gen)
+
         case "256_3":
-            return Research(prompt="Generate a title for a report about renting in nyc.", research_type=ResearchType.text_gen, max_output_tokens=15, recommended_output_tokens=12)
+            # Report title
+            lifestyle_text = f" for {', '.join(lifestyle_preferences[:2])}" if lifestyle_preferences else ""
+            prompt = f"Generate a concise, professional title for a NYC housing report about renting near {preferred_station} station on the {preferred_line} line{lifestyle_text}"
+            return Research(
+                prompt=prompt,
+                research_type=ResearchType.text_gen,
+                max_output_tokens=20,
+                recommended_output_tokens=15
+            )
+
         case "256_4":
-            return Research(prompt="subway_1", research_type=ResearchType.subway_gen)
+            # Subway map visualization
+            alternatives = f" and alternatives: {', '.join(alternative_stations[:3])}" if alternative_stations else ""
+            prompt = f"subway_map:{preferred_line}:{preferred_station}{alternatives}"
+            return Research(prompt=prompt, research_type=ResearchType.subway_gen)
+
         case "257_2":
             return None
+
         case "257_3":
-            return Research(prompt="chart_1", research_type=ResearchType.image_given)
+            # Chart 1 - Budget/Rent comparison
+            prompt = f"chart_rent_comparison:{preferred_station}:{budget_range}"
+            if alternative_stations:
+                prompt += f":{','.join(alternative_stations[:3])}"
+            return Research(prompt=prompt, research_type=ResearchType.image_given)
+
         case "257_4":
-            return Research(prompt="stats_1", research_type=ResearchType.text_given)
+            # Stats 1 - Average rent
+            prompt = f"{budget_range}"
+            return Research(prompt=prompt, research_type=ResearchType.text_given)
+
         case "257_5":
             return None
+
         case "257_6":
-            return Research(prompt="stats_2", research_type=ResearchType.text_given)
+            # Stats 2 - Commute time or amenity count
+            focus = commute_preferences if commute_preferences else "general"
+            prompt = f"{focus}"
+            return Research(prompt=prompt, research_type=ResearchType.text_given)
+
         case "257_7":
             return None
+
         case "257_8":
-            return Research(prompt="Generate a text about renting in nyc", research_type=ResearchType.text_gen, max_output_tokens=30, recommended_output_tokens=26)
+            # Summary paragraph about the area
+            amenities_text = f" with amenities like {', '.join(amenities_desired[:3])}" if amenities_desired else ""
+            lifestyle_text = f" suited for {', '.join(lifestyle_preferences[:2])}" if lifestyle_preferences else ""
+            dislikes_text = f", avoiding {', '.join(neighborhood_dislikes[:2])}" if neighborhood_dislikes else ""
+
+            prompt = f"Generate a compelling summary paragraph about renting near {preferred_station} station on the {preferred_line} line"
+            if budget_range:
+                prompt += f" with a budget of {budget_range}"
+            prompt += amenities_text + lifestyle_text + dislikes_text
+            prompt += f". Focus on what makes this area special for someone looking to live here."
+
+            return Research(
+                prompt=prompt,
+                research_type=ResearchType.text_gen,
+                max_output_tokens=150,
+                recommended_output_tokens=120
+            )
+
         case _:
             return None
 
-@app.get("/build-heuristic")
-async def build_heuristic():    
+@app.post("/build-heuristic")
+async def build_heuristic(request: Request):
+    """
+    Build heuristic with personalized research prompts based on user data.
+    Accepts POST data with user preferences from the research report.
+    """
+    # Get user data from request body
+    data = await request.json()
+
+    # Extract user preferences with defaults
+    user_data = {
+        "summary": data.get("summary", ""),
+        "preferred_line": data.get("preferred_line", ""),
+        "preferred_station": data.get("preferred_station", ""),
+        "budget_range": data.get("budget_range", ""),
+        "lifestyle_preferences": data.get("lifestyle_preferences", []),
+        "amenities_desired": data.get("amenities_desired", []),
+        "commute_preferences": data.get("commute_preferences", ""),
+        "alternative_stations": data.get("alternative_stations", []),
+        "neighborhood_likes": data.get("neighborhood_likes", []),
+        "neighborhood_dislikes": data.get("neighborhood_dislikes", []),
+        "alternative_neighborhoods": data.get("alternative_neighborhoods", [])
+    }
+
     prs = Presentation("../reference.pptx")
-    
+
     # Build the heuristic
+    heuristic = {}
+    for slide_idx, slide in enumerate(prs.slides):
+        for shape_idx, shape in enumerate(slide.shapes):
+            print(shape.name)
+            # Create a unique primary key by joining slide_id and shape_id
+            primary_key = f"{slide.slide_id}_{shape.shape_id}"
+
+            # Pass user data to shape_to_research
+            research = shape_to_research(primary_key, **user_data)
+
+            heuristic[primary_key] = {
+                "research": research.to_dict() if research is not None else None,
+                "bounding_box": {
+                    "left": shape.left,
+                    "top": shape.top,
+                    "width": shape.width,
+                    "height": shape.height
+                }
+            }
+
+    # Save heuristic to JSON file
+    with open("../heuristic.json", "w") as f:
+        json.dump(heuristic, f, indent=4)
+
+    return heuristic
+
+@app.get("/build-heuristic")
+async def build_heuristic_legacy():
+    """
+    Legacy GET endpoint for building heuristic without user data.
+    Kept for backwards compatibility.
+    """
+    prs = Presentation("../reference.pptx")
+
+    # Build the heuristic with empty user data
     heuristic = {}
     for slide_idx, slide in enumerate(prs.slides):
         for shape_idx, shape in enumerate(slide.shapes):
@@ -127,7 +264,7 @@ async def build_heuristic():
     # Save heuristic to JSON file
     with open("../heuristic.json", "w") as f:
         json.dump(heuristic, f, indent=4)
-    
+
     return heuristic
 
 @app.post("/update-image")

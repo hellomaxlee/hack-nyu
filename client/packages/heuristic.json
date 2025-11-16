@@ -1,7 +1,7 @@
 {
     "256_2": {
         "research": {
-            "prompt": "Generate an image",
+            "prompt": "Generate a professional, modern image depicting the Flushing-Main Street subway station area in NYC, highlighting heart of Flushing area, Main Street station vicinity",
             "research_type": "image_gen",
             "max_output_tokens": null,
             "recommended_output_tokens": null
@@ -15,10 +15,10 @@
     },
     "256_3": {
         "research": {
-            "prompt": "Generate a title for a report about renting in nyc.",
+            "prompt": "Generate a concise, professional title for a NYC housing report about renting near Flushing-Main Street station on the 7 line for vibrant neighborhood, culturally diverse area",
             "research_type": "text_gen",
-            "max_output_tokens": 15,
-            "recommended_output_tokens": 12
+            "max_output_tokens": 20,
+            "recommended_output_tokens": 15
         },
         "bounding_box": {
             "left": 1398493,
@@ -29,7 +29,7 @@
     },
     "256_4": {
         "research": {
-            "prompt": "subway_1",
+            "prompt": "subway_map:7:Flushing-Main Street",
             "research_type": "subway_gen",
             "max_output_tokens": null,
             "recommended_output_tokens": null
@@ -52,7 +52,7 @@
     },
     "257_3": {
         "research": {
-            "prompt": "chart_1",
+            "prompt": "chart_rent_comparison:Flushing-Main Street:Not specified - typical range for area is $1,600-$3,000+ depending on unit size",
             "research_type": "image_given",
             "max_output_tokens": null,
             "recommended_output_tokens": null
@@ -66,7 +66,7 @@
     },
     "257_4": {
         "research": {
-            "prompt": "stats_1",
+            "prompt": "Not specified - typical range for area is $1,600-$3,000+ depending on unit size",
             "research_type": "text_given",
             "max_output_tokens": null,
             "recommended_output_tokens": null
@@ -89,7 +89,7 @@
     },
     "257_6": {
         "research": {
-            "prompt": "stats_2",
+            "prompt": "Direct commute to Times Square-42nd Street on 7 line, approximately 30 minutes, with express train options during rush hours and 24/7 service availability",
             "research_type": "text_given",
             "max_output_tokens": null,
             "recommended_output_tokens": null
@@ -112,10 +112,10 @@
     },
     "257_8": {
         "research": {
-            "prompt": "Generate a text about renting in nyc",
+            "prompt": "Generate a compelling summary paragraph about renting near Flushing-Main Street station on the 7 line with a budget of Not specified - typical range for area is $1,600-$3,000+ depending on unit size with amenities like Asian restaurants, bubble tea shops, Asian supermarkets suited for vibrant neighborhood, culturally diverse area. Focus on what makes this area special for someone looking to live here.",
             "research_type": "text_gen",
-            "max_output_tokens": 30,
-            "recommended_output_tokens": 26
+            "max_output_tokens": 150,
+            "recommended_output_tokens": 120
         },
         "bounding_box": {
             "left": 1383863,
