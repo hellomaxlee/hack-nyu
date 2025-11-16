@@ -5,14 +5,27 @@
 
 # Set up / libraries
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load(tidyverse, ggplot2, dplyr, sf, tigris, tidycensus, stringr, purr, jsonlite)
+pacman::p_load(tidyverse, ggplot2, dplyr, sf, tigris, tidycensus, stringr, purrr, jsonlite)
 census_api_key("f93cd840b4ef93c2e0b640f5cac639fe7430a61a", install = TRUE, overwrite = TRUE)
 options(tigris_use_cache = TRUE)
 df <- read.csv("stations.csv") 
 
 ###
-input_latitude <- 40.7104 # Sample
-input_longitude <- -73.9908 # Sample
+
+# Helper function to calculate distance between two lat/lon points
+haversine_distance <- function(lat1, lon1, lat2, lon2) {
+  R <- 3959  # Earth's radius in miles
+  lat1_rad <- lat1 * pi / 180
+  lat2_rad <- lat2 * pi / 180
+  delta_lat <- (lat2 - lat1) * pi / 180
+  delta_lon <- (lon2 - lon1) * pi / 180
+  
+  a <- sin(delta_lat/2)^2 + cos(lat1_rad) * cos(lat2_rad) * sin(delta_lon/2)^2
+  c <- 2 * asin(sqrt(a))
+  return(R * c)
+}
+
+# Main function: analyze subway accessibility and rent data for a given location
 run_model <- function(input_latitude, input_longitude) {
   
   df$distance <- haversine_distance(
@@ -285,3 +298,6 @@ run_model <- function(input_latitude, input_longitude) {
   return(stop_rent_list)
 }
 
+# Example usage
+result <- run_model(40.7104, -73.9908)
+print(result)
