@@ -1,5 +1,6 @@
 # Plumber for API call
 
+install.packages("plumber")
 library(plumber)
 
 source("data.R")
