@@ -15,6 +15,8 @@ export const ResearchTaskSchema = z.object({
 	boundingBox: BoundingBoxSchema,
 	referenceElementKey: z.string(),
 	prompt: z.string(),
+	maxOutputTokens: z.number().optional(),
+	recommendedOutputTokens: z.number().optional(),
 	researchType: ResearchTypeSchema,
 });
 

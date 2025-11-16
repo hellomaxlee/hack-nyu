@@ -2,6 +2,28 @@
 
 import { useEffect, useRef, useState } from "react";
 import Script from "next/script";
+import { Button } from "@/components/ui/button";
+import { orpc } from "@/utils/orpc";
+import { useMutation } from "@tanstack/react-query";
+
+type RentDatasetEntry = {
+	avg_rent_all: number | null;
+	avg_rent_studio: number | null;
+	avg_rent_1br: number | null;
+	avg_rent_2br: number | null;
+	avg_median_income: number | null;
+	avg_pct_bachelors_plus: number | null;
+	avg_pct_foreign_born: number | null;
+	n_tracts: number;
+};
+
+type StationRentInfo = {
+	Stop: string;
+	ForLine: string | null;
+	Long: number;
+	Lat: number;
+	RentDataset: RentDatasetEntry[];
+};
 
 const R_API = process.env.NEXT_PUBLIC_R_API_BASE || "http://localhost:8081";
 const GOOGLE_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
@@ -256,38 +278,46 @@ export default function Page() {
   const [loadingR, setLoadingR] = useState(false);
   const [googleReady, setGoogleReady] = useState(false);
 
-  // Initialize Google Places Autocomplete
-  useEffect(() => {
-    if (!googleReady) return;
-    if (!inputRef.current) return;
+	// PowerPoint generation mutation
+	const { mutate: generateReport, isPending: isGeneratingReport } = useMutation(
+		orpc.powerpoint.createPlan.mutationOptions({
+			onSuccess: (data) => {
+				console.log("Report generated successfully:", data);
+				setReportGenerated(true);
+			},
+			onError: (error) => {
+				console.error("Error generating report:", error);
+				setError(error.message || "Failed to generate report");
+			},
+		}),
+	);
 
-    const google = (window as any).google;
-    if (!google) return;
+	// Initialize Google Places Autocomplete
+	useEffect(() => {
+		if (!googleReady) return;
+		if (!inputRef.current) return;
 
-    autocompleteRef.current = new google.maps.places.Autocomplete(
-      inputRef.current,
-      {
-        types: ["geocode"],
-        fields: ["formatted_address", "geometry"],
-      }
-    );
+		const google = (window as any).google;
+		if (!google) return;
 
-    autocompleteRef.current.addListener("place_changed", () => {
-      const place = autocompleteRef.current.getPlace();
+		autocompleteRef.current = new google.maps.places.Autocomplete(
+			inputRef.current,
+			{
+				types: ["geocode"],
+				fields: ["formatted_address", "geometry"],
+			},
+		);
 
-      if (!place.geometry || !place.geometry.location) {
-        setError("No coordinates found for that location.");
-        return;
-      }
+		autocompleteRef.current.addListener("place_changed", () => {
+			const place = autocompleteRef.current.getPlace();
 
-      const latVal = place.geometry.location.lat();
-      const lngVal = place.geometry.location.lng();
+			if (!place.geometry || !place.geometry.location) {
+				setError("No coordinates found for that location.");
+				return;
+			}
 
-      setAddress(place.formatted_address || "");
-      setFormattedAddress(place.formatted_address || "");
-      setLat(latVal);
-      setLng(lngVal);
-      setError(null);
+			const latVal = place.geometry.location.lat();
+			const lngVal = place.geometry.location.lng();
 
       // Call /closest-station immediately on selection
       callR(latVal, lngVal);

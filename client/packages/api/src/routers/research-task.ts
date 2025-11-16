@@ -12,43 +12,12 @@ import type {
 	DeleteSlideJob,
 } from "../types";
 import { CreateResearchTaskInputSchema } from "../types";
+import { generateText } from "ai";
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 
-type TaskDescription = {
-	id: number;
-	subject: string;
-	question: string;
-};
-
-const getBoundingBox = (
-	_subject: string,
-	_question: string,
-	_heuristic: string,
-	id: number,
-): BoundingBox => {
-	switch (id) {
-		case 1:
-			return {
-				left: 0,
-				top: 0,
-				width: 0,
-				height: 0,
-			};
-		case 2:
-			return {
-				left: 0,
-				top: 0,
-				width: 0,
-				height: 0,
-			};
-		default:
-			return {
-				left: 0,
-				top: 0,
-				width: 0,
-				height: 0,
-			};
-	}
-};
+const openrouter = createOpenRouter({
+	apiKey: process.env.OPENROUTER_API_KEY,
+});
 
 type TaskInfo = {
 	primary_key: string;
@@ -59,6 +28,8 @@ type HeuristicData = {
 	research: {
 		prompt: string;
 		research_type: ResearchType;
+		max_output_tokens?: number;
+		recommended_output_tokens?: number;
 	};
 	bounding_box: BoundingBox;
 };
@@ -95,7 +66,6 @@ const createResearchTasks = async ({
 }): Promise<ResearchTask[]> => {
 	const { charts, stats, subwayLines } = input;
 	// const heuristic = readFileSync(join(process.cwd(), "heuristic.json"), "utf8");
-	console.log("tes", process.cwd());
 	const taskList = JSON.parse(
 		readFileSync(
 			join(process.cwd(), "..", "..", "packages", "shapes_info.json"),
@@ -109,8 +79,6 @@ const createResearchTasks = async ({
 			"utf8",
 		),
 	) as Record<string, HeuristicData>;
-
-	console.log("taskList", taskList);
 
 	// we basically did this above
 	// const taskList = await inferTaskList(prompt, xmlSlide);
@@ -134,10 +102,20 @@ const createResearchTasks = async ({
 				return null;
 			}
 
+			let maxOutputTokens: number | null = null;
+			let recommendedOutputTokens: number | null = null;
+			if (heuristicData.research.research_type === "text_gen") {
+				maxOutputTokens = heuristicData.research.max_output_tokens ?? null;
+				recommendedOutputTokens =
+					heuristicData.research.recommended_output_tokens ?? null;
+			}
+
 			return {
 				boundingBox: heuristicData.bounding_box,
 				referenceElementKey: task.primary_key,
 				prompt: prompt,
+				maxOutputTokens: maxOutputTokens,
+				recommendedOutputTokens: recommendedOutputTokens,
 				researchType: heuristicData.research.research_type,
 			} as ResearchTask;
 		})
@@ -146,24 +124,25 @@ const createResearchTasks = async ({
 	return tasks;
 };
 
-const computeResearchTask = async (
-	researchType: ResearchType,
-): Promise<string> => {
-	switch (researchType) {
-		case "image_gen":
-			return "image_gen";
-		case "image_given":
-			return "image_given";
-		case "text_gen":
-			return "text_gen";
-		case "text_given":
-			return "text_given";
-		case "subway_gen":
-			return "subway_gen";
-		default:
-			throw new Error(`Unsupported research type: ${researchType}`);
-	}
-};
+// const computeResearchTask = async (
+// 	researchType: ResearchType,
+// 	prompt: string,
+// ): Promise<string> => {
+// 	switch (researchType) {
+// 		case "image_gen":
+// 			return prompt;
+// 		case "image_given":
+// 			return prompt;
+// 		case "text_gen":
+// 			return prompt;
+// 		case "text_given":
+// 			return prompt;
+// 		case "subway_gen":
+// 			return prompt;
+// 		default:
+// 			throw new Error(`Unsupported research type: ${researchType}`);
+// 	}
+// };
 
 const answerResearchTask = async (
 	researchTask: ResearchTask,
@@ -171,11 +150,78 @@ const answerResearchTask = async (
 	const prompt = researchTask.prompt;
 	const researchType = researchTask.researchType;
 	console.log("researchType", researchTask);
-	const researchResults = await computeResearchTask(researchType);
+	// const researchResults = await computeResearchTask(researchType);
 
-	if (researchType === "image_gen" || researchType === "image_given") {
+	if (researchType === "image_gen") {
 		// TODO implement image insertion and updates
 		return null;
+	}
+
+	if (researchType === "image_given") {
+		return {
+			type: "create",
+			parent: researchTask,
+			boundingBox: researchTask.boundingBox,
+			referenceElementKey: researchTask.referenceElementKey,
+			jobTool: "image",
+			params: {
+				jobTool: "image",
+				url: prompt,
+			},
+		} as SlideJob;
+	}
+
+	if (researchType === "subway_gen") {
+		return {
+			type: "create",
+			parent: researchTask,
+			boundingBox: researchTask.boundingBox,
+			referenceElementKey: researchTask.referenceElementKey,
+			jobTool: "text",
+			params: {
+				jobTool: "text",
+				content: prompt,
+			},
+		} as SlideJob;
+	}
+
+	if (researchType === "text_given") {
+		return {
+			type: "create",
+			parent: researchTask,
+			boundingBox: researchTask.boundingBox,
+			referenceElementKey: researchTask.referenceElementKey,
+			jobTool: "text",
+			params: {
+				jobTool: "text",
+				content: prompt,
+			},
+		} as SlideJob;
+	}
+
+	if (researchType === "text_gen") {
+		const { text } = await generateText({
+			model: openrouter.chat("anthropic/claude-3.5-sonnet"),
+			prompt: `
+			${researchTask.prompt}. Please output ${researchTask.recommendedOutputTokens} tokens.
+			`,
+			maxOutputTokens: researchTask.maxOutputTokens,
+		});
+
+		const generatedContent = text;
+		console.log("generatedContent", generatedContent);
+
+		return {
+			type: "create",
+			parent: researchTask,
+			boundingBox: researchTask.boundingBox,
+			referenceElementKey: researchTask.referenceElementKey,
+			jobTool: "text",
+			params: {
+				jobTool: "text",
+				content: generatedContent,
+			},
+		} as SlideJob;
 	}
 
 	return {
@@ -186,7 +232,7 @@ const answerResearchTask = async (
 		jobTool: "text",
 		params: {
 			jobTool: "text",
-			content: researchResults,
+			content: prompt,
 		},
 	} as SlideJob;
 };
@@ -221,26 +267,39 @@ const doSlideJobTool = async (
 		throw new Error(`Unsupported slide job type: ${slideJob.type}`);
 	}
 
-	if (slideJob.jobTool !== "text") {
+	if (slideJob.jobTool === "image") {
 		// TODO image slide job will update existing image pptx id with new image url
+		const response = await fetch("http://localhost:8000/update-image", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				referenceElementKey: slideJob.referenceElementKey,
+				imageUrl: (slideJob.params as { url: string }).url,
+			}),
+		});
+		if (!response.ok) {
+			throw new Error(`Failed to update image: ${response.statusText}`);
+		}
+		return;
+	} else if (slideJob.jobTool === "text") {
+		const response = await fetch("http://localhost:8000/update-shape", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				referenceElementKey: slideJob.referenceElementKey,
+				content: (slideJob.params as { content: string }).content,
+			}),
+		});
+		if (!response.ok) {
+			throw new Error(`Failed to update shape: ${response.statusText}`);
+		}
+		return;
+	} else {
 		throw new Error(`Unsupported slide job tool: ${slideJob.jobTool}`);
-	}
-
-	// CREATE: Update the python pptx shape with updated text
-	// Make external API request to localhost:8000
-	const response = await fetch("http://localhost:8000", {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-		},
-		body: JSON.stringify({
-			referenceElementKey: slideJob.referenceElementKey,
-			content: slideJob.params.content,
-		}),
-	});
-
-	if (!response.ok) {
-		throw new Error(`Failed to update slide: ${response.statusText}`);
 	}
 };
 
@@ -256,6 +315,7 @@ export const powerpointRouter = {
 				(slideJob): slideJob is SlideJob => slideJob !== null,
 			);
 			// const deleteSlideJobs = createDeleteSlideJobs(researchTasks);
+			await Promise.all(createSlideJobs.map(doSlideJobTool));
 			return {
 				createSlideJobs,
 				// deleteSlideJobs,
