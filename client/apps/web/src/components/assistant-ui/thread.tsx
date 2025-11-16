@@ -26,6 +26,8 @@ import * as m from "motion/react-m";
 import { Button } from "@/components/ui/button";
 import { MarkdownText } from "@/components/assistant-ui/markdown-text";
 import { ToolFallback } from "@/components/assistant-ui/tool-fallback";
+import { TodoListUI } from "@/components/assistant-ui/todo-list-ui";
+import { ResearchReportUI } from "@/components/assistant-ui/research-report-ui";
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
 import {
   ComposerAddAttachment,
@@ -35,7 +37,54 @@ import {
 
 import { cn } from "@/lib/utils";
 
-export const Thread: FC = () => {
+// Helper to get line badge styling
+type LineStyle = {
+  bg: string;
+  text: string;
+};
+
+function getLineStyle(raw: string): LineStyle {
+  const line = raw.trim().toUpperCase();
+
+  if (["1", "2", "3"].includes(line)) {
+    return { bg: "bg-red-600", text: "text-white" };
+  }
+  if (["4", "5", "6"].includes(line)) {
+    return { bg: "bg-green-600", text: "text-white" };
+  }
+  if (["7"].includes(line)) {
+    return { bg: "bg-purple-600", text: "text-white" };
+  }
+  if (["A", "C", "E"].includes(line)) {
+    return { bg: "bg-blue-600", text: "text-white" };
+  }
+  if (["B", "D", "F", "M"].includes(line)) {
+    return { bg: "bg-orange-500", text: "text-white" };
+  }
+  if (["N", "Q", "R", "W"].includes(line)) {
+    return { bg: "bg-yellow-400", text: "text-black" };
+  }
+  if (["G"].includes(line)) {
+    return { bg: "bg-lime-500", text: "text-black" };
+  }
+  if (["J", "Z"].includes(line)) {
+    return { bg: "bg-amber-700", text: "text-white" };
+  }
+  if (["L"].includes(line)) {
+    return { bg: "bg-zinc-500", text: "text-white" };
+  }
+  if (["S"].includes(line)) {
+    return { bg: "bg-slate-700", text: "text-white" };
+  }
+
+  return { bg: "bg-sky-600", text: "text-white" };
+}
+
+interface ThreadProps {
+  lines?: string[];
+}
+
+export const Thread: FC<ThreadProps> = ({ lines = [] }) => {
   return (
     <LazyMotion features={domAnimation}>
       <MotionConfig reducedMotion="user">
@@ -47,7 +96,7 @@ export const Thread: FC = () => {
         >
           <ThreadPrimitive.Viewport className="aui-thread-viewport relative flex flex-1 flex-col overflow-x-auto overflow-y-scroll px-4">
             <ThreadPrimitive.If empty>
-              <ThreadWelcome />
+              <ThreadWelcome lines={lines} />
             </ThreadPrimitive.If>
 
             <ThreadPrimitive.Messages
@@ -84,7 +133,11 @@ const ThreadScrollToBottom: FC = () => {
   );
 };
 
-const ThreadWelcome: FC = () => {
+interface ThreadWelcomeProps {
+  lines?: string[];
+}
+
+const ThreadWelcome: FC<ThreadWelcomeProps> = ({ lines = [] }) => {
   return (
     <div className="aui-thread-welcome-root mx-auto my-auto flex w-full max-w-[var(--thread-max-width)] flex-grow flex-col">
       <div className="aui-thread-welcome-center flex w-full flex-grow flex-col items-center justify-center">
@@ -95,16 +148,42 @@ const ThreadWelcome: FC = () => {
             exit={{ opacity: 0, y: 10 }}
             className="aui-thread-welcome-message-motion-1 text-2xl font-semibold"
           >
-            Hello there!
+            Rent in NYC
           </m.div>
           <m.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
             transition={{ delay: 0.1 }}
-            className="aui-thread-welcome-message-motion-2 text-2xl text-muted-foreground/65"
+            className="aui-thread-welcome-message-motion-2 text-2xl text-muted-foreground/65 flex items-center gap-2 flex-wrap"
           >
-            How can I help you today?
+            near the{" "}
+            {lines.length > 0 ? (
+              lines.map((line, index) => {
+                const style = getLineStyle(line);
+                return (
+                  <span
+                    key={`${line}-${index}`}
+                    className={`inline-flex items-center justify-center rounded-full h-7 w-7 text-[0.75rem] font-bold ${style.bg} ${style.text} shadow-md shadow-black/40`}
+                    style={{
+                      fontFamily: "Helvetica, Arial, system-ui, sans-serif",
+                    }}
+                  >
+                    {line.toUpperCase()}
+                  </span>
+                );
+              })
+            ) : (
+              <span
+                className="inline-flex items-center justify-center rounded-full h-7 w-7 text-[0.75rem] font-bold bg-red-600 text-white shadow-md shadow-black/40"
+                style={{
+                  fontFamily: "Helvetica, Arial, system-ui, sans-serif",
+                }}
+              >
+                1
+              </span>
+            )}{" "}
+            {lines.length === 1 ? "train" : "trains"}
           </m.div>
         </div>
       </div>
@@ -118,24 +197,9 @@ const ThreadSuggestions: FC = () => {
     <div className="aui-thread-welcome-suggestions grid w-full gap-2 pb-4 @md:grid-cols-2">
       {[
         {
-          title: "What's the weather",
-          label: "in San Francisco?",
-          action: "What's the weather in San Francisco?",
-        },
-        {
-          title: "Explain React hooks",
-          label: "like useState and useEffect",
-          action: "Explain React hooks like useState and useEffect",
-        },
-        {
-          title: "Write a SQL query",
-          label: "to find top customers",
-          action: "Write a SQL query to find top customers",
-        },
-        {
-          title: "Create a meal plan",
-          label: "for healthy weight loss",
-          action: "Create a meal plan for healthy weight loss",
+          title: "Help me rent in NYC",
+          label: "near train line to work",
+          action: "Help me find a place to live where I can take the train to work.",
         },
       ].map((suggestedAction, index) => (
         <m.div
@@ -248,7 +312,13 @@ const AssistantMessage: FC = () => {
           <MessagePrimitive.Parts
             components={{
               Text: MarkdownText,
-              tools: { Fallback: ToolFallback },
+              tools: {
+                by_name: {
+                  ListTodos: TodoListUI,
+                  generate_research_report: ResearchReportUI,
+                },
+                Fallback: ToolFallback
+              },
             }}
           />
           <MessageError />

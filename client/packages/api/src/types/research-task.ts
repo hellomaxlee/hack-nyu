@@ -33,9 +33,20 @@ export const StatSchema = z.object({
 });
 
 export const CreateResearchTaskInputSchema = z.object({
-	charts: z.array(ChartSchema),
-	stats: z.array(StatSchema),
-	subwayLines: z.array(z.string()),
+	summary: z.string().optional(),
+	preferred_line: z.string().optional(),
+	preferred_station: z.string().optional(),
+	neighborhood_likes: z.array(z.string()).optional(),
+	neighborhood_dislikes: z.array(z.string()).optional(),
+	alternative_stations: z.array(z.string()).optional(),
+	alternative_neighborhoods: z.array(z.string()).optional(),
+	commute_preferences: z.string().optional(),
+	budget_range: z.string().optional(),
+	lifestyle_preferences: z.array(z.string()).optional(),
+	amenities_desired: z.array(z.string()).optional(),
+	charts: z.array(ChartSchema).optional(),
+	stats: z.array(StatSchema).optional(),
+	subwayLines: z.array(z.string()).optional(),
 });
 
 export const HeuristicSchema = z.object({});

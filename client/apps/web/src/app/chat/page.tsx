@@ -1,21 +1,28 @@
 "use client";
 
-import { Thread } from "@/components/assistant-ui/thread";
-import { AssistantRuntimeProvider } from "@assistant-ui/react";
-import { useChatRuntime, AssistantChatTransport } from "@assistant-ui/react-ai-sdk";
+import { useSearchParams } from "next/navigation";
+import Dashboard from "@/components/Dashboard";
 
 export default function Home() {
-  const runtime = useChatRuntime({
-    transport: new AssistantChatTransport({
-      api: "/api/chat",
-    }),
-});
+  const searchParams = useSearchParams();
+  const lat = searchParams.get("lat");
+  const lng = searchParams.get("lng");
 
+  // Only render Dashboard when both lat and lng are available
+  if (lat && lng) {
+    const latitude = parseFloat(lat);
+    const longitude = parseFloat(lng);
+
+    // Validate that the parsed values are valid numbers
+    if (!isNaN(latitude) && !isNaN(longitude)) {
+      return <Dashboard latitude={latitude} longitude={longitude} />;
+    }
+  }
+
+  // Loading state while waiting for coordinates
   return (
-    <AssistantRuntimeProvider runtime={runtime}>
-      <div className="h-full">
-	  	<Thread />
-      </div>
-    </AssistantRuntimeProvider>
+    <div className="flex h-screen w-full items-center justify-center">
+      <p className="text-muted-foreground">Waiting for location data...</p>
+    </div>
   );
 }

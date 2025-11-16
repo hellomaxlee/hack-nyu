@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Script from "next/script";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { orpc } from "@/utils/orpc";
 import { useMutation } from "@tanstack/react-query";
@@ -262,6 +263,7 @@ function FallingPills() {
 // --- Page component ---
 
 export default function Page() {
+  const router = useRouter();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const autocompleteRef = useRef<any>(null);
 
@@ -330,6 +332,10 @@ export default function Page() {
     setStationData(null);
     setError(null);
 
+    // Save the coordinates
+    setLat(latVal);
+    setLng(lngVal);
+
     try {
       const res = await fetch(
         `${R_API}/closest-station?lat=${latVal}&lng=${lngVal}`
@@ -346,6 +352,20 @@ export default function Page() {
     } finally {
       setLoadingR(false);
     }
+  }
+
+  // Handle clicking on the closest station card
+  function handleStationClick() {
+    if (!closestStation || lat === null || lng === null) return;
+
+    const stationName = closestStation.stop_name || closestStation.Stop || "Unknown station";
+    const params = new URLSearchParams({
+      lat: lat.toString(),
+      lng: lng.toString(),
+      station: stationName,
+    });
+
+    router.push(`/chat?${params.toString()}`);
   }
 
   // Convenience: unpack stations list
@@ -425,9 +445,12 @@ export default function Page() {
           )}
 
           {closestStation && (
-            <section className="rounded-3xl bg-sky-900/40 p-5 shadow-xl shadow-sky-950/40 border border-sky-500/40 backdrop-blur-md">
+            <section
+              onClick={handleStationClick}
+              className="rounded-3xl bg-sky-900/40 p-5 shadow-xl shadow-sky-950/40 border border-sky-500/40 backdrop-blur-md cursor-pointer hover:bg-sky-900/60 hover:border-sky-400/60 transition-all duration-200"
+            >
               <p className="text-[0.7rem] uppercase tracking-[0.25em] text-sky-200 mb-1">
-                Closest subway station
+                Closest subway station (Click to chat)
               </p>
               <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                 <div>
