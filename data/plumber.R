@@ -253,3 +253,142 @@ function(stop_name, req, res) {
   
   stop_rent_list[idx]
 }
+
+# 4) /predict ---------------------------------------------------------------
+#* ACS / rent summary for all stations on the closest station's lines
+#*
+#* Logic:
+#*  - Same as /stations-on-lines:
+#*      * Find single closest station to (lat, lng)
+#*      * Get its lines (lines_closest) via lines_list
+#*      * Find all stations whose lines_list shares ANY of those lines
+#*  - Then:
+#*      * Filter stop_rent_list down to just those stations (by Stop name)
+#*
+#* Returns:
+#* {
+#*   "closest_station": { ... },     # basic info about the closest station
+#*   "lines": ["1","2","3"],         # lines on closest station
+#*   "stations": [                   # same structure as elements of stop_rent_list
+#*     {
+#*       "Stop": "14 St - Union Sq",
+#*       "ForLine": ["4","5","6","L","N","Q","R","W"],
+#*       "Long": -73.990568,
+#*       "Lat": 40.735736,
+#*       "RentDataset": [
+#*         {
+#*           "avg_rent_all": ...,
+#*           "avg_rent_studio": ...,
+#*           "avg_rent_1br": ...,
+#*           "avg_rent_2br": ...,
+#*           "avg_median_income": ...,
+#*           "avg_pct_bachelors_plus": ...,
+#*           "avg_pct_foreign_born": ...,
+#*           "n_tracts": ...
+#*         }
+#*       ]
+#*     },
+#*     ...
+#*   ]
+#* }
+#*
+#* @param lat:double Latitude of the input point
+#* @param lng:double Longitude of the input point
+#* @get /predict
+#* @serializer json
+function(lat, lng, req, res) {
+  lat <- as.numeric(lat)
+  lng <- as.numeric(lng)
+  
+  if (is.na(lat) || is.na(lng)) {
+    res$status <- 400
+    return(list(error = "Both 'lat' and 'lng' must be numeric query parameters."))
+  }
+  
+  # --- Same first steps as /stations-on-lines ------------------------------
+  
+  # 1) Find the SINGLE closest station
+  distances <- haversine_distance(
+    lat1 = lat,
+    lon1 = lng,
+    lat2 = stations_df$Latitude,
+    lon2 = stations_df$Longitude
+  )
+  
+  df_with_dist <- stations_df %>%
+    mutate(distance_miles = distances) %>%
+    arrange(distance_miles)
+  
+  if (nrow(df_with_dist) == 0) {
+    return(list(
+      closest_station = list(),
+      lines           = list(),
+      stations        = list()
+    ))
+  }
+  
+  closest_row <- df_with_dist[1, , drop = FALSE]
+  
+  # 2) Lines on the closest station ONLY, using precomputed lines_list
+  closest_lines_raw <- closest_row$lines_list[[1]]
+  
+  lines_closest <- closest_lines_raw %>%
+    toupper() %>%
+    trimws()
+  lines_closest <- lines_closest[lines_closest != ""]
+  lines_closest <- sort(unique(lines_closest))
+  
+  if (length(lines_closest) == 0) {
+    closest_station_out <- closest_row %>%
+      select(stop_name, Daytime.Routes, Latitude, Longitude, distance_miles)
+    
+    return(list(
+      closest_station = closest_station_out,
+      lines           = list(),
+      stations        = list()
+    ))
+  }
+  
+  # 3) All stations that serve ANY of those lines (using lines_list)
+  mask <- vapply(
+    stations_df$lines_list,
+    function(v) {
+      v_clean <- toupper(trimws(v))
+      any(v_clean %in% lines_closest)
+    },
+    logical(1)
+  )
+  
+  stations_matched <- stations_df[mask, , drop = FALSE]
+  
+  # Names of those stations (for matching to stop_rent_list$Stop)
+  station_names <- stations_matched$stop_name
+  
+  # --- Map into stop_rent_list (ACS + rent stats) --------------------------
+  
+  # Filter stop_rent_list down to entries whose Stop is in station_names
+  idx <- which(vapply(
+    stop_rent_list,
+    function(x) x$Stop %in% station_names,
+    logical(1)
+  ))
+  
+  stations_with_stats <- stop_rent_list[idx]
+  
+  # Basic closest station info for context
+  closest_station_out <- closest_row %>%
+    select(
+      stop_name,
+      Daytime.Routes,
+      Latitude,
+      Longitude,
+      distance_miles
+    )
+  
+  list(
+    closest_station = closest_station_out,
+    lines           = lines_closest,
+    stations        = stations_with_stats
+  )
+}
+
