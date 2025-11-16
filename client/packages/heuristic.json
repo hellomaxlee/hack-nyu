@@ -2,7 +2,9 @@
     "256_2": {
         "research": {
             "prompt": "Generate an image",
-            "research_type": "image_gen"
+            "research_type": "image_gen",
+            "max_output_tokens": null,
+            "recommended_output_tokens": null
         },
         "bounding_box": {
             "left": 0,
@@ -13,8 +15,10 @@
     },
     "256_3": {
         "research": {
-            "prompt": "Summarize what the research query is in the location we're working on",
-            "research_type": "text_gen"
+            "prompt": "Generate a title for a report about renting in nyc.",
+            "research_type": "text_gen",
+            "max_output_tokens": 15,
+            "recommended_output_tokens": 12
         },
         "bounding_box": {
             "left": 1398493,
@@ -26,7 +30,9 @@
     "256_4": {
         "research": {
             "prompt": "subway_1",
-            "research_type": "subway_gen"
+            "research_type": "subway_gen",
+            "max_output_tokens": null,
+            "recommended_output_tokens": null
         },
         "bounding_box": {
             "left": 1383863,
@@ -47,7 +53,9 @@
     "257_3": {
         "research": {
             "prompt": "chart_1",
-            "research_type": "image_given"
+            "research_type": "image_given",
+            "max_output_tokens": null,
+            "recommended_output_tokens": null
         },
         "bounding_box": {
             "left": 1383863,
@@ -59,7 +67,9 @@
     "257_4": {
         "research": {
             "prompt": "stats_1",
-            "research_type": "text_given"
+            "research_type": "text_given",
+            "max_output_tokens": null,
+            "recommended_output_tokens": null
         },
         "bounding_box": {
             "left": 1383863,
@@ -80,7 +90,9 @@
     "257_6": {
         "research": {
             "prompt": "stats_2",
-            "research_type": "text_given"
+            "research_type": "text_given",
+            "max_output_tokens": null,
+            "recommended_output_tokens": null
         },
         "bounding_box": {
             "left": 7562255,
@@ -100,8 +112,10 @@
     },
     "257_8": {
         "research": {
-            "prompt": "Generate a text based on the research query",
-            "research_type": "text_gen"
+            "prompt": "Generate a text about renting in nyc",
+            "research_type": "text_gen",
+            "max_output_tokens": 30,
+            "recommended_output_tokens": 26
         },
         "bounding_box": {
             "left": 1383863,

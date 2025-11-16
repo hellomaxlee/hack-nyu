@@ -35,7 +35,11 @@
     "db:migrate": "turbo -F @client/db db:migrate"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^2.0.67",
+    "@assistant-ui/react": "^0.11.38",
+    "@assistant-ui/react-ai-sdk": "^1.1.10",
     "@openrouter/ai-sdk-provider": "^1.2.3",
+    "ai": "^5.0.93",
     "dotenv": "^17.2.2",
     "zod": "^4.1.11"
   },
