@@ -146,7 +146,7 @@ run_model <- function(input_latitude, input_longitude) {
   names(line_shapes) <- line_shape_df$line
   
   # (Optional) Plot – side effect only, not returned
-  ggplot() +
+  p <- ggplot() +
     geom_sf(data = tracts_nyc_4326,
             fill = "white", color = "black", linewidth = 0.1) +
     geom_sf(data = tracts_by_stop_4326,
@@ -168,13 +168,20 @@ run_model <- function(input_latitude, input_longitude) {
       legend.box = "horizontal"
     ) +
     labs(
-      title    = "NYC Census Tracts Within Walking Distance of Relevant Subway Stations",
-      subtitle = "Buffers colored by subway line; point shapes distinguish lines with identical MTA colors",
+      title    = "Walking Distance of Relevant NYC Subway Stations",
       x = NULL,
       y = NULL,
       shape = "Subway Line",
       color = "Subway Line"
     )
+  
+  ggsave(
+    filename = "Chart1.png",
+    plot     = p,
+    width    = 10,
+    height   = 8,
+    dpi      = 300
+  )
   
   ### Rent / income / education / foreign-born
   
@@ -297,7 +304,3 @@ run_model <- function(input_latitude, input_longitude) {
   # Final return: a list that Plumber will JSON-ify
   return(stop_rent_list)
 }
-
-# Example usage
-result <- run_model(40.7104, -73.9908)
-print(result)
