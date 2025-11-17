@@ -1,7 +1,7 @@
 {
     "256_2": {
         "research": {
-            "prompt": "Generate a professional, modern image depicting the Flushing-Main Street subway station area in NYC, highlighting heart of Flushing area, Main Street station vicinity",
+            "prompt": "Generate a professional, modern image depicting the Astoria Blvd subway station area in NYC, highlighting diverse food options, restaurant variety",
             "research_type": "image_gen",
             "max_output_tokens": null,
             "recommended_output_tokens": null
@@ -15,7 +15,7 @@
     },
     "256_3": {
         "research": {
-            "prompt": "Generate a concise, professional title for a NYC housing report about renting near Flushing-Main Street station on the 7 line for vibrant neighborhood, culturally diverse area",
+            "prompt": "Generate a concise, professional title for a NYC housing report about renting near Astoria Blvd station on the N line for urban environment, good food scene",
             "research_type": "text_gen",
             "max_output_tokens": 20,
             "recommended_output_tokens": 15
@@ -29,7 +29,7 @@
     },
     "256_4": {
         "research": {
-            "prompt": "subway_map:7:Flushing-Main Street",
+            "prompt": "subway_map:N:Astoria Blvd and alternatives: Bergen Street, Franklin Ave, Nostrand Ave",
             "research_type": "subway_gen",
             "max_output_tokens": null,
             "recommended_output_tokens": null
@@ -52,7 +52,7 @@
     },
     "257_3": {
         "research": {
-            "prompt": "chart_rent_comparison:Flushing-Main Street:Not specified - typical range for area is $1,600-$3,000+ depending on unit size",
+            "prompt": "chart_rent_comparison:Astoria Blvd:Under $2,000/month:Bergen Street,Franklin Ave,Nostrand Ave",
             "research_type": "image_given",
             "max_output_tokens": null,
             "recommended_output_tokens": null
@@ -66,7 +66,7 @@
     },
     "257_4": {
         "research": {
-            "prompt": "Not specified - typical range for area is $1,600-$3,000+ depending on unit size",
+            "prompt": "Under $2,000/month",
             "research_type": "text_given",
             "max_output_tokens": null,
             "recommended_output_tokens": null
@@ -89,7 +89,7 @@
     },
     "257_6": {
         "research": {
-            "prompt": "Direct commute to Times Square-42nd Street on 7 line, approximately 30 minutes, with express train options during rush hours and 24/7 service availability",
+            "prompt": "Direct subway access to Times Square-42nd Street for work commute",
             "research_type": "text_given",
             "max_output_tokens": null,
             "recommended_output_tokens": null
@@ -112,7 +112,7 @@
     },
     "257_8": {
         "research": {
-            "prompt": "Generate a compelling summary paragraph about renting near Flushing-Main Street station on the 7 line with a budget of Not specified - typical range for area is $1,600-$3,000+ depending on unit size with amenities like Asian restaurants, bubble tea shops, Asian supermarkets suited for vibrant neighborhood, culturally diverse area. Focus on what makes this area special for someone looking to live here.",
+            "prompt": "Generate a compelling summary paragraph about renting near Astoria Blvd station on the N line with a budget of Under $2,000/month with amenities like restaurants, dining options, subway access suited for urban environment, good food scene. Focus on what makes this area special for someone looking to live here.",
             "research_type": "text_gen",
             "max_output_tokens": 150,
             "recommended_output_tokens": 120

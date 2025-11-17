@@ -8,22 +8,22 @@ import { orpc } from "@/utils/orpc";
 import { useMutation } from "@tanstack/react-query";
 
 type RentDatasetEntry = {
-	avg_rent_all: number | null;
-	avg_rent_studio: number | null;
-	avg_rent_1br: number | null;
-	avg_rent_2br: number | null;
-	avg_median_income: number | null;
-	avg_pct_bachelors_plus: number | null;
-	avg_pct_foreign_born: number | null;
-	n_tracts: number;
+  avg_rent_all: number | null;
+  avg_rent_studio: number | null;
+  avg_rent_1br: number | null;
+  avg_rent_2br: number | null;
+  avg_median_income: number | null;
+  avg_pct_bachelors_plus: number | null;
+  avg_pct_foreign_born: number | null;
+  n_tracts: number;
 };
 
 type StationRentInfo = {
-	Stop: string;
-	ForLine: string | null;
-	Long: number;
-	Lat: number;
-	RentDataset: RentDatasetEntry[];
+  Stop: string;
+  ForLine: string | null;
+  Long: number;
+  Lat: number;
+  RentDataset: RentDatasetEntry[];
 };
 
 const R_API = process.env.NEXT_PUBLIC_R_API_BASE || "http://localhost:8081";
@@ -280,46 +280,46 @@ export default function Page() {
   const [loadingR, setLoadingR] = useState(false);
   const [googleReady, setGoogleReady] = useState(false);
 
-	// PowerPoint generation mutation
-	const { mutate: generateReport, isPending: isGeneratingReport } = useMutation(
-		orpc.powerpoint.createPlan.mutationOptions({
-			onSuccess: (data) => {
-				console.log("Report generated successfully:", data);
-				setReportGenerated(true);
-			},
-			onError: (error) => {
-				console.error("Error generating report:", error);
-				setError(error.message || "Failed to generate report");
-			},
-		}),
-	);
+  // PowerPoint generation mutation
+  const { mutate: generateReport, isPending: isGeneratingReport } = useMutation(
+    orpc.powerpoint.createPlan.mutationOptions({
+      onSuccess: (data) => {
+        console.log("Report generated successfully:", data);
+        setReportGenerated(true);
+      },
+      onError: (error) => {
+        console.error("Error generating report:", error);
+        setError(error.message || "Failed to generate report");
+      },
+    }),
+  );
 
-	// Initialize Google Places Autocomplete
-	useEffect(() => {
-		if (!googleReady) return;
-		if (!inputRef.current) return;
+  // Initialize Google Places Autocomplete
+  useEffect(() => {
+    if (!googleReady) return;
+    if (!inputRef.current) return;
 
-		const google = (window as any).google;
-		if (!google) return;
+    const google = (window as any).google;
+    if (!google) return;
 
-		autocompleteRef.current = new google.maps.places.Autocomplete(
-			inputRef.current,
-			{
-				types: ["geocode"],
-				fields: ["formatted_address", "geometry"],
-			},
-		);
+    autocompleteRef.current = new google.maps.places.Autocomplete(
+      inputRef.current,
+      {
+        types: ["geocode"],
+        fields: ["formatted_address", "geometry"],
+      },
+    );
 
-		autocompleteRef.current.addListener("place_changed", () => {
-			const place = autocompleteRef.current.getPlace();
+    autocompleteRef.current.addListener("place_changed", () => {
+      const place = autocompleteRef.current.getPlace();
 
-			if (!place.geometry || !place.geometry.location) {
-				setError("No coordinates found for that location.");
-				return;
-			}
+      if (!place.geometry || !place.geometry.location) {
+        setError("No coordinates found for that location.");
+        return;
+      }
 
-			const latVal = place.geometry.location.lat();
-			const lngVal = place.geometry.location.lng();
+      const latVal = place.geometry.location.lat();
+      const lngVal = place.geometry.location.lng();
 
       // Call /closest-station immediately on selection
       callR(latVal, lngVal);
@@ -376,9 +376,9 @@ export default function Page() {
   const nearbyOthers: StationRow[] =
     stations.length > 1
       ? stations.slice(1).filter((s) => {
-          if (typeof s.distance_miles !== "number") return false;
-          return s.distance_miles <= 0.25 + 1e-6;
-        })
+        if (typeof s.distance_miles !== "number") return false;
+        return s.distance_miles <= 0.25 + 1e-6;
+      })
       : [];
 
   const closestName =
@@ -405,7 +405,7 @@ export default function Page() {
         <main className="relative z-10 mx-auto flex max-w-4xl flex-col gap-6 px-4 py-8 md:py-12">
           <section className="rounded-3xl bg-slate-900/70 p-5 shadow-xl shadow-sky-950/40 backdrop-blur-lg border border-slate-800/80">
             <h1 className="text-2xl md:text-3xl font-semibold tracking-tight mb-2">
-              NYC Subway Station Finder
+              StationScope
             </h1>
             <p className="text-sm text-slate-300 max-w-xl">
               Type an address in New York City to find your next dream apartment

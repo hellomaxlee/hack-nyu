@@ -106,7 +106,6 @@ export default function Dashboard({ latitude, longitude }: DashboardProps) {
       if (closestStation) {
         const stationId = getStationIdByName(closestStation.stop_name);
         console.log("Jumping to closest station:", closestStation.stop_name);
-        console.log("stationId", stationId);
         jumpToStation(stationId);
       }
 
@@ -117,10 +116,9 @@ export default function Dashboard({ latitude, longitude }: DashboardProps) {
       }
     } else {
       // Fallback to default behavior if data not loaded yet
-      const stationId = getStationIdByName("Times Sq-42 St");
+      // const stationId = getStationIdByName("Times Sq-42 St");
       selectLines(["2"]);
-      console.log("stationId", stationId);
-      jumpToStation(stationId);
+      // jumpToStation(stationId);
     }
     console.log("User location:", { latitude, longitude });
   };

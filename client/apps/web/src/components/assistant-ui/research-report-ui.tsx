@@ -37,7 +37,7 @@ export const ResearchReportUI: ToolCallMessagePartComponent = ({
         setStatus("approved");
 
         // Load generated images from public/pptx_images
-        const imageCount = 1;
+        const imageCount = 2;
         const images = Array.from({ length: imageCount }, (_, i) =>
           `/pptx_images/slide_${i + 1}.png`
         );
