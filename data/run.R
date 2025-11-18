@@ -1,3 +1,6 @@
+# Hack NYU Code
+# Author: Maxwell Lee
+
 install.packages("plumber")
 library(plumber)
 
