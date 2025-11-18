@@ -1,4 +1,5 @@
-## This is the repo for StationScope, built from November 15th to November 16th at the 2025-2026 Hack NYU Hackathon and continuing as an ongoing project.
+## This is the repo for StationScope
+### We built this app from November 15th to November 16th at the 2025-2026 HackNYU Hackathon and continuing as an ongoing project.
 ### Authors:
 ### Daren Hua (https://www.linkedin.com/in/daren-hua/)
 ### Maxwell Lee (https://www.linkedin.com/in/maxwelllee12/)
