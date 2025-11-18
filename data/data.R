@@ -1,8 +1,7 @@
 # Hack NYU Code
 # Author: Maxwell Lee
 
-### PACKAGES & SETUP ---------------------------------------------------------
-
+# Packages
 required_packages <- c(
   "pacman",
   "tidyverse",
@@ -34,14 +33,12 @@ pacman::p_load(
   jsonlite
 )
 
+# Set up data
 census_api_key("f93cd840b4ef93c2e0b640f5cac639fe7430a61a", install = TRUE, overwrite = TRUE)
 options(tigris_use_cache = TRUE)
 
-### STATIONS MASTER TABLE ----------------------------------------------------
-
 raw_stations <- read.csv("stations.csv")
 
-# Normalize column names (adjust if needed to match your CSV)
 stations_df <- raw_stations %>%
   rename(
     stop_name      = Stop.Name,
@@ -50,10 +47,8 @@ stations_df <- raw_stations %>%
     Longitude      = Longitude
   )
 
-# Precompute list of routes per station
 stations_df$lines_list <- str_split(stations_df$Daytime.Routes, " ")
 
-# sf object for spatial work
 stations_sf <- stations_df %>%
   st_as_sf(
     coords  = c("Longitude", "Latitude"),
@@ -61,11 +56,8 @@ stations_sf <- stations_df %>%
     remove  = FALSE
   )
 
-### HELPER FUNCTIONS ---------------------------------------------------------
-
-# Haversine distance in miles
 haversine_distance <- function(lat1, lon1, lat2, lon2) {
-  R <- 3959  # Earth's radius in miles
+  R <- 3959 
   
   lat1_rad <- lat1 * pi / 180
   lat2_rad <- lat2 * pi / 180
@@ -79,7 +71,6 @@ haversine_distance <- function(lat1, lon1, lat2, lon2) {
   R * c
 }
 
-# Robust tokenization for routes (handles spaces, commas, dashes, etc.)
 parse_routes <- function(x) {
   if (is.null(x) || is.na(x)) return(character(0))
   
@@ -90,12 +81,9 @@ parse_routes <- function(x) {
   unique(tokens)
 }
 
-### TRACTS + BUFFERS (SPATIAL SCOPE) ----------------------------------------
-
-# Basic tract geometry for NYC 5 boroughs (used for buffers & plotting)
 tracts_nyc <- get_acs(
   geography = "tract",
-  variables = "B01001_001",  # total population (dummy variable)
+  variables = "B01001_001", 
   state     = "NY",
   county    = c("New York", "Kings", "Queens", "Bronx", "Richmond"),
   year      = 2022,
@@ -103,28 +91,24 @@ tracts_nyc <- get_acs(
 ) %>%
   select(GEOID, NAME, total_pop = estimate, geometry)
 
-# Project to feet (EPSG:2263) for distance-accurate buffers
 quarter_mile_ft <- 0.25 * 5280
 
 stations_2263 <- st_transform(stations_sf, 2263)
 tracts_2263   <- st_transform(tracts_nyc, 2263)
 
-# 0.25-mile buffers around every station in the system
 buffers_2263 <- stations_2263 %>%
   st_buffer(dist = quarter_mile_ft)
 
-# Tracts that intersect each station's buffer
 tracts_by_stop_2263 <- st_intersection(
   buffers_2263 %>% select(stop_name),
   tracts_2263 %>% select(GEOID, geometry)
 )
 
-# Mapping from tract -> station(s)
 tract_stop_map <- tracts_by_stop_2263 %>%
   st_drop_geometry() %>%
   distinct(GEOID, stop_name)
 
-### RENT / INCOME / EDUCATION / FOREIGN-BORN (ACS 2023) ---------------------
+# Pull from ACS
 
 rent_income_vars <- c(
   rent_all      = "B25058_001",  # median gross rent (overall)
@@ -145,7 +129,6 @@ rent_income_acs <- get_acs(
   select(GEOID, variable, estimate) %>%
   pivot_wider(names_from = variable, values_from = estimate)
 
-# Education: % bachelor's+ (B15003)
 educ_raw <- get_acs(
   geography = "tract",
   table     = "B15003",
@@ -168,7 +151,6 @@ education <- educ_raw %>%
     ) / B15003_001
   )
 
-# Foreign-born share (B05002)
 fb_raw <- get_acs(
   geography = "tract",
   table     = "B05002",
@@ -186,16 +168,13 @@ foreign_born <- fb_raw %>%
     pct_foreign_born = B05002_013 / B05002_001
   )
 
-# Merge all ACS covariates together
 rent_qol_acs <- rent_income_acs %>%
   left_join(education,    by = "GEOID") %>%
   left_join(foreign_born, by = "GEOID")
 
-# Attach ACS-covariates to the tract ↔ station map
 tracts_with_rent <- tract_stop_map %>%
   left_join(rent_qol_acs, by = "GEOID")
 
-# Aggregate to station level
 rent_by_station <- tracts_with_rent %>%
   group_by(stop_name) %>%
   summarize(
@@ -211,7 +190,6 @@ rent_by_station <- tracts_with_rent %>%
   ) %>%
   arrange(desc(avg_rent_all))
 
-# Station info + line list
 stations_info <- stations_sf %>%
   st_drop_geometry() %>%
   select(stop_name, Daytime.Routes, Longitude, Latitude) %>%
@@ -223,7 +201,6 @@ stations_info <- stations_sf %>%
     .groups   = "drop"
   )
 
-# Combined station summary (what the front end uses)
 station_summary <- rent_by_station %>%
   left_join(stations_info, by = "stop_name") %>%
   select(
@@ -241,7 +218,6 @@ station_summary <- rent_by_station %>%
     Latitude
   )
 
-# Nested list structure for JSON (used by /station-summary)
 stop_rent_list <- station_summary %>%
   pmap(function(stop_name,
                 avg_rent_all,
@@ -273,9 +249,8 @@ stop_rent_list <- station_summary %>%
     )
   })
 
-### OPTIONAL PLOTTING UTILITIES + run_model() -------------------------------
+# Plotting experiments
 
-# MTA line colors for plotting
 line_colors <- c(
   "1" = "#EE352E", "2" = "#EE352E", "3" = "#EE352E",  # Red
   "4" = "#00933C", "5" = "#00933C", "6" = "#00933C",  # Green
@@ -294,7 +269,6 @@ line_color_df <- tibble(
   color = unname(line_colors)
 )
 
-# Shapes within each color group for plotting points
 unique_shapes <- c(21, 22, 23, 24, 25, 1, 2, 5)
 
 line_shape_df <- line_color_df %>%
@@ -305,11 +279,8 @@ line_shape_df <- line_color_df %>%
 line_shapes <- line_shape_df$shape
 names(line_shapes) <- line_shape_df$line
 
-# Main function: analyze accessibility + produce map for a given location
-# (Reuses globally precomputed tracts, buffers, etc. No repeated ACS pulls.)
 run_model <- function(input_latitude, input_longitude) {
   
-  # Distance from input point to all stations
   distances <- haversine_distance(
     lat1 = input_latitude,
     lon1 = input_longitude,
@@ -324,10 +295,8 @@ run_model <- function(input_latitude, input_longitude) {
     filter(distance == min(distance, na.rm = TRUE)) %>%
     slice(1)
   
-  # Lines served by closest station
   lines <- parse_routes(closest_station$Daytime.Routes[1])
   
-  # All stations serving any of those lines
   relevant_lines_df <- df_with_dist %>%
     filter(sapply(lines_list, function(x) any(x %in% lines))) %>%
     rowwise() %>%
@@ -339,7 +308,6 @@ run_model <- function(input_latitude, input_longitude) {
     ) %>%
     ungroup()
   
-  # Local sf object for relevant stations only
   stations_sf_local <- relevant_lines_df %>%
     st_as_sf(
       coords  = c("Longitude", "Latitude"),
@@ -347,7 +315,6 @@ run_model <- function(input_latitude, input_longitude) {
       remove  = FALSE
     )
   
-  # Create local buffers & intersect with tract geometry
   stations_2263_local <- st_transform(stations_sf_local, 2263)
   buffers_2263_local  <- st_buffer(stations_2263_local, dist = quarter_mile_ft)
   buffers_4326        <- st_transform(buffers_2263_local, 4326)
@@ -361,7 +328,6 @@ run_model <- function(input_latitude, input_longitude) {
   
   tracts_by_stop_4326 <- st_transform(tracts_by_stop_2263_local, 4326)
   
-  # Zoom window for plotting
   bbox <- st_bbox(buffers_4326)
   pad  <- 0.01
   xlim <- c(bbox$xmin - pad, bbox$xmax + pad)
@@ -417,6 +383,5 @@ run_model <- function(input_latitude, input_longitude) {
     dpi      = 300
   )
   
-  # Return the precomputed stop_rent_list so it's consistent with the API
   return(stop_rent_list)
 }
