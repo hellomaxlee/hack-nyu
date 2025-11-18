@@ -1,20 +1,11 @@
 # Hack NYU Code
 # Author: Maxwell Lee
 
-### PLUMBER SETUP ------------------------------------------------------------
+# Initialize and filter CORS
 
 library(plumber)
-
-# Load shared data, precomputed objects, and helper functions:
-#   - stations_df, stations_sf
-#   - haversine_distance(), parse_routes()
-#   - stop_rent_list, etc.
 source("data.R")
 
-### PLUMBER API --------------------------------------------------------------
-
-#* @apiTitle NYC Subway API
-#* @apiDescription Closest station, stations on lines, and rent summary.
 function(req, res) {
 res$setHeader("Access-Control-Allow-Origin", "*")
 res$setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
@@ -28,9 +19,6 @@ if (req$REQUEST_METHOD == "OPTIONS") {
 plumber::forward()
 }
 
-# --- CORS filter so the Next.js frontend can call the API -------------------
-
-#* @filter cors
 function(req, res) {
   res$setHeader("Access-Control-Allow-Origin", "*")
   res$setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
@@ -44,14 +32,8 @@ function(req, res) {
   plumber::forward()
 }
 
-# 1) /closest-station --------------------------------------------------------
+# API endpoint 1: /closest-station
 
-#* Closest station + any others within ~0.25 miles
-#* (Front-end uses this for the primary cards.)
-#* @param lat:double Latitude of the input point
-#* @param lng:double Longitude of the input point
-#* @get /closest-station
-#* @serializer json
 function(lat, lng, req, res) {
   lat <- as.numeric(lat)
   lng <- as.numeric(lng)
@@ -82,7 +64,6 @@ function(lat, lng, req, res) {
     ))
   }
   
-  # Core columns to expose
   cols_out <- intersect(
     c("stop_name", "Daytime.Routes", "Latitude", "Longitude", "distance_miles"),
     names(df_with_dist)
@@ -107,27 +88,9 @@ function(lat, lng, req, res) {
     stations = nearby_stations
   )
 }
-# 2) /stations-on-lines ------------------------------------------------------
-#* All stations on the lines served by the closest station
-#*
-#* Logic:
-#*  - Find the single closest station to (lat, lng)
-#*  - Take that station's lines_list (e.g. c("1","2","3"))
-#*  - Return every station whose lines_list shares ANY of those lines
-#*
-#* Returns:
-#* {
-#*   "closest_station": [ { stop_name, Daytime.Routes, Latitude, Longitude, distance_miles } ],
-#*   "lines": ["1", "2", "3"],   # lines on closest station only
-#*   "stations_on_lines": [
-#*     { stop_name, Daytime.Routes, Latitude, Longitude, primary_line }
-#*   ]
-#* }
-#*
-#* @param lat:double Latitude of the input point
-#* @param lng:double Longitude of the input point
-#* @get /stations-on-lines
-#* @serializer json
+
+# API endpoint 2: /stations-on-lines
+
 function(lat, lng, req, res) {
   lat <- as.numeric(lat)
   lng <- as.numeric(lng)
@@ -137,7 +100,6 @@ function(lat, lng, req, res) {
     return(list(error = "Both 'lat' and 'lng' must be numeric query parameters."))
   }
   
-  # 1) Find the SINGLE closest station --------------------------------------
   distances <- haversine_distance(
     lat1 = lat,
     lon1 = lng,
@@ -159,11 +121,8 @@ function(lat, lng, req, res) {
   
   closest_row <- df_with_dist[1, , drop = FALSE]
   
-  # 2) Lines on the closest station ONLY, using precomputed lines_list ------
-  #    lines_list is a list-column of character vectors (e.g. c("1","2","3"))
   closest_lines_raw <- closest_row$lines_list[[1]]
   
-  # Clean: uppercase, trim, drop empties, dedupe
   lines_closest <- closest_lines_raw %>%
     toupper() %>%
     trimws()
@@ -171,7 +130,6 @@ function(lat, lng, req, res) {
   lines_closest <- sort(unique(lines_closest))
   
   if (length(lines_closest) == 0) {
-    # closest station has no usable line info
     closest_station_out <- closest_row %>%
       select(stop_name, Daytime.Routes, Latitude, Longitude, distance_miles)
     
@@ -182,7 +140,6 @@ function(lat, lng, req, res) {
     ))
   }
   
-  # 3) All stations that serve ANY of those lines (using lines_list) --------
   mask <- vapply(
     stations_df$lines_list,
     function(v) {
@@ -194,7 +151,6 @@ function(lat, lng, req, res) {
   
   stations_matched <- stations_df[mask, , drop = FALSE]
   
-  # primary_line = first of that station's lines that belongs to lines_closest
   stations_matched$primary_line <- vapply(
     stations_matched$lines_list,
     function(v) {
@@ -231,13 +187,8 @@ function(lat, lng, req, res) {
 }
 
   
-# 3) /station-summary --------------------------------------------------------
+# API endpoint 3: /station-summary
 
-#* Rent / census summary for a particular stop_name
-#* (returns the nested Stop/ForLine/RentDataset structure)
-#* @param stop_name The exact station name
-#* @get /station-summary
-#* @serializer json
 function(stop_name, req, res) {
   if (missing(stop_name) || is.null(stop_name) || stop_name == "") {
     res$status <- 400
@@ -254,48 +205,7 @@ function(stop_name, req, res) {
   stop_rent_list[idx]
 }
 
-# 4) /predict ---------------------------------------------------------------
-#* ACS / rent summary for all stations on the closest station's lines
-#*
-#* Logic:
-#*  - Same as /stations-on-lines:
-#*      * Find single closest station to (lat, lng)
-#*      * Get its lines (lines_closest) via lines_list
-#*      * Find all stations whose lines_list shares ANY of those lines
-#*  - Then:
-#*      * Filter stop_rent_list down to just those stations (by Stop name)
-#*
-#* Returns:
-#* {
-#*   "closest_station": { ... },     # basic info about the closest station
-#*   "lines": ["1","2","3"],         # lines on closest station
-#*   "stations": [                   # same structure as elements of stop_rent_list
-#*     {
-#*       "Stop": "14 St - Union Sq",
-#*       "ForLine": ["4","5","6","L","N","Q","R","W"],
-#*       "Long": -73.990568,
-#*       "Lat": 40.735736,
-#*       "RentDataset": [
-#*         {
-#*           "avg_rent_all": ...,
-#*           "avg_rent_studio": ...,
-#*           "avg_rent_1br": ...,
-#*           "avg_rent_2br": ...,
-#*           "avg_median_income": ...,
-#*           "avg_pct_bachelors_plus": ...,
-#*           "avg_pct_foreign_born": ...,
-#*           "n_tracts": ...
-#*         }
-#*       ]
-#*     },
-#*     ...
-#*   ]
-#* }
-#*
-#* @param lat:double Latitude of the input point
-#* @param lng:double Longitude of the input point
-#* @get /predict
-#* @serializer json
+# API endpoint 4: /predict
 function(lat, lng, req, res) {
   lat <- as.numeric(lat)
   lng <- as.numeric(lng)
@@ -305,9 +215,6 @@ function(lat, lng, req, res) {
     return(list(error = "Both 'lat' and 'lng' must be numeric query parameters."))
   }
   
-  # --- Same first steps as /stations-on-lines ------------------------------
-  
-  # 1) Find the SINGLE closest station
   distances <- haversine_distance(
     lat1 = lat,
     lon1 = lng,
@@ -329,7 +236,6 @@ function(lat, lng, req, res) {
   
   closest_row <- df_with_dist[1, , drop = FALSE]
   
-  # 2) Lines on the closest station ONLY, using precomputed lines_list
   closest_lines_raw <- closest_row$lines_list[[1]]
   
   lines_closest <- closest_lines_raw %>%
@@ -349,7 +255,6 @@ function(lat, lng, req, res) {
     ))
   }
   
-  # 3) All stations that serve ANY of those lines (using lines_list)
   mask <- vapply(
     stations_df$lines_list,
     function(v) {
@@ -360,13 +265,9 @@ function(lat, lng, req, res) {
   )
   
   stations_matched <- stations_df[mask, , drop = FALSE]
-  
-  # Names of those stations (for matching to stop_rent_list$Stop)
+
   station_names <- stations_matched$stop_name
   
-  # --- Map into stop_rent_list (ACS + rent stats) --------------------------
-  
-  # Filter stop_rent_list down to entries whose Stop is in station_names
   idx <- which(vapply(
     stop_rent_list,
     function(x) x$Stop %in% station_names,
@@ -375,7 +276,6 @@ function(lat, lng, req, res) {
   
   stations_with_stats <- stop_rent_list[idx]
   
-  # Basic closest station info for context
   closest_station_out <- closest_row %>%
     select(
       stop_name,
