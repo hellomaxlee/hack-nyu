@@ -1,4 +1,3 @@
-## This is the Github repository for StationScope
 ### We built this app from November 15th to November 16th at the 2025-2026 HackNYU Hackathon
 
 The project won first place in the Aristotle Challenge: Most Cutting-Edge AI Agent, as well as third place in the education track. 🥇🥉
