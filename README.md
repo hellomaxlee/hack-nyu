@@ -1,13 +1,16 @@
-### We built this app from November 15th to November 16th at the 2025-2026 HackNYU Hackathon
+# We built this app from November 15th to November 16th at the 2025-2026 HackNYU Hackathon
 
-The project won first place in the Aristotle Challenge: Most Cutting-Edge AI Agent, as well as third place in the education track. 🥇🥉
+### The project won:
+- First place in the Aristotle Challenge: Most Cutting-Edge AI Agent
+- Third place in the education track
 
 ### Authors:
 - Daren Hua (https://www.linkedin.com/in/daren-hua/)
 - Maxwell Lee (https://www.linkedin.com/in/maxwelllee12/)
 
 ### This repo contains two main high level folders:
-- client -- this contains all materials to run the frontend and backend (click on the folder for more details in a separate README.md).
--  data --- this contains all project data science and statistical modeling, as well as the API calls and endpoints; in order to run this program locally, you have to run "run.R" after installing R on your system. You also need a free Google Maps API key for Places and Geocoding, which you can save to your .env file and call it accordingly.
+- client: this contains all materials to run the frontend and backend (click on the folder for more details in a separate README.md).
+-  data: this contains all project data science and statistical modeling, as well as the API calls and endpoints; in order to run this program locally, you have to run "run.R" after installing R on your system. You also need a free Google Maps API key for Places and Geocoding, which you can save to your .env file and call it accordingly.
 
-See more details about the project at https://devpost.com/software/stationscope
+See more details about the project at: https://devpost.com/software/stationscope
+Continued updates (including additional features!) are at: https://github.com/hellomaxlee/station-scope
